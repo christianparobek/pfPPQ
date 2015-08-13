@@ -17,10 +17,11 @@ gatk=/nas02/apps/biojars-1.0/GenomeAnalysisTK-3.3-0/GenomeAnalysisTK.jar
 ##########################################################################
 
 ## TRYING OUT HAPLOTYPE CALLER
-java -jar $gatk \
+java -Xmx8g -jar $gatk \
 	-T HaplotypeCaller \
 	-R $ref \
 	-L targets.intervals \
 	-I our_goods_5x@60%.list \
+	-ploidy 1 \
 	-o variants/targets.vcf
 		# gatk.intervals includes just the chromosomes and mitochondria
