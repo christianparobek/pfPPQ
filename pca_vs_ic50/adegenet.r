@@ -79,6 +79,7 @@ pca.plotter <- function(pca, pops, x, y) {
 
 ### PREPARE DATA FOR ANALYSIS ###
 pf_cam_gl <- genlight.maker("/run/user/1001/gvfs/sftp:host=kure.unc.edu,user=prchrist/proj/julianog/users/ChristianP/cambodiaWGS/adegenet/our_goods_pf.pass.str") # make genlight
+hi <- read.table("hi_ic50s.txt", header = FALSE)
 pf_cam_pops <- pop.definer(indNames(pf_cam_gl)) # define pops OR
 pf_cam_pops <- ic50.marker(indNames(pf_cam_gl), hi$V1) # mark the high IC50s
 pf_cam_pca <- glPca(pf_cam_gl) # calculate PCA
@@ -91,3 +92,12 @@ title(substitute(paste("Cambodia ", italic('P. falciparum'), " Eigenvalues" )), 
 pca.plotter(pf_cam_pca, pf_cam_pops + 1, 1, 2)
 legend(-80, -30, legend = c("IC50 top 25% ", "IC50 bottom 75%"), col = c("red", "black"), pch=19, bty="n", cex=1.5)
 title(substitute(paste(italic('P. falciparum'), " PCA vs. PPQ IC50" )), line = -0.5, cex.main=1.5)
+
+
+
+
+
+
+library(pegas)
+loci <- read.vcf("/run/user/1001/gvfs/sftp:host=kure.unc.edu,user=prchrist/proj/julianog/users/ChristianP/cambodiaWGS/pf/variants/our_goods_UG.pass.vcf", nloci=100)
+

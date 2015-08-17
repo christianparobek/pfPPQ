@@ -13,15 +13,48 @@ gatk=/nas02/apps/biojars-1.0/GenomeAnalysisTK-3.3-0/GenomeAnalysisTK.jar
 
 
 ##########################################################################
-########################### CALL HAPLOTYPES ##############################
+########################### CALL GENOTYPES ###############################
 ##########################################################################
 
 ## TRYING OUT HAPLOTYPE CALLER
-java -Xmx8g -jar $gatk \
+for indiv in `cat our_goods_5x@60%.list`
+do
+
+java -Xmx48g -jar $gatk \
 	-T HaplotypeCaller \
 	-R $ref \
 	-L targets.intervals \
-	-I our_goods_5x@60%.list \
+	-I $indiv \
 	-ploidy 1 \
-	-o variants/targets.vcf
+	-o variants/${indiv:51:5}.vcf
 		# gatk.intervals includes just the chromosomes and mitochondria
+
+done
+
+
+##########################################################################
+######################### CYTOCHROME B MUTS ##############################
+##########################################################################
+
+for indiv in `cat our_goods_5x@60%.list`
+do
+
+echo ${indiv:51:5}
+grep "M76611" variants/${indiv:51:5}.vcf
+
+done
+
+
+##########################################################################
+########################## MIOTTO BACKBONE ###############################
+##########################################################################
+
+for indiv in `cat our_goods_5x@60%.list`
+do
+
+echo ${indiv:51:5} | tr '\n' '\t' # remove newline
+grep "1956225\|2481070\|405362\|405600\|748395\|490720" variants/${indiv:51:5}.vcf | cut -d$'\t' -f2 | tr '\n' '\t'
+echo # add a newline
+
+done > backbone.txt
+
