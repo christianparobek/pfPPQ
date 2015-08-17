@@ -12,22 +12,17 @@
 
 library(adegenet)
 library(stringr)
+library(pegas)
 
 
 #####################################################
 ################# Define Functions ##################
 #####################################################
 
-## Function to create a genlight object from
-## STRUCTURE file. VCF->STR using PGDSpider2
+## Function to create genlight from VCF.
 genlight.maker <- function(infile) {
-  table <- read.table(infile, skip=1, na.strings="-9") # read in data, missing is "-9" in str format
-  sorted <- table[order(table[,1]),] # sort
-  inds <- sorted$V1 # grab the indiv names
-  pops <- sorted$V2 # grab the pop names
-  sorted <- sorted[-c(1,2)] # remove ind and pop columns from data frame
-  genlight <- new("genlight", sorted) # convert data frame into genlight object
-  indNames(genlight) <- inds # add back individual information
+  loci <- read.vcf(infile)
+  genlight <- new("genlight", loci) # convert data frame into genlight object
   ploidy(genlight) <- 1 # add back population information
   return(genlight)
 }
@@ -35,7 +30,6 @@ genlight.maker <- function(infile) {
 ## Function to assign samples to pops
 ## based on a list of their names
 pop.definer <- function(ind_names) {
-  library(stringr)
   kp <- as.numeric(str_detect(ind_names, "BB"))*1 # assign KP pop number
   bb <- as.numeric(str_detect(ind_names, "KP"))*2 # assign BB pop number
   om <- as.numeric(str_detect(ind_names, "OM"))*3 # assign OM pop number
@@ -49,7 +43,6 @@ pop.definer <- function(ind_names) {
 
 # Function to mark hi IC50 samples, given a vector of samples and of IC50s
 ic50.marker <- function(ind_names, hi_ic50s) {
-  library(stringr)
   ic <- as.numeric(str_detect(ind_names, paste(hi_ic50s, sep = "", collapse = "|")))
   return(ic)
 }
@@ -61,7 +54,7 @@ eig.plotter <- function(pca) {
 
 ## Function to record PCAs
 pca.plotter <- function(pca, pops, x, y) {
-  plot(jitter(pca$scores[,y], factor=300) ~ jitter(pca$scores[,x], factor=300), 
+  plot(jitter(pca$scores[,y], factor=700) ~ jitter(pca$scores[,x], factor=700), 
      col=pops, 
      pch=19, 
      axes=FALSE, 
@@ -78,7 +71,7 @@ pca.plotter <- function(pca, pops, x, y) {
 ##############################################################
 
 ### PREPARE DATA FOR ANALYSIS ###
-pf_cam_gl <- genlight.maker("/run/user/1001/gvfs/sftp:host=kure.unc.edu,user=prchrist/proj/julianog/users/ChristianP/cambodiaWGS/adegenet/our_goods_pf.pass.str") # make genlight
+pf_cam_gl <- genlight.maker("/run/user/1001/gvfs/sftp:host=kure.unc.edu,user=prchrist/proj/julianog/users/ChristianP/cambodiaWGS/pf/variants/our_goods_UG.pass.vcf") # make genlight
 hi <- read.table("hi_ic50s.txt", header = FALSE)
 pf_cam_pops <- pop.definer(indNames(pf_cam_gl)) # define pops OR
 pf_cam_pops <- ic50.marker(indNames(pf_cam_gl), hi$V1) # mark the high IC50s
@@ -90,14 +83,10 @@ title(substitute(paste("Cambodia ", italic('P. falciparum'), " Eigenvalues" )), 
 
 ### PLOT PCA PICTURE ###
 pca.plotter(pf_cam_pca, pf_cam_pops + 1, 1, 2)
-legend(-80, -30, legend = c("IC50 top 25% ", "IC50 bottom 75%"), col = c("red", "black"), pch=19, bty="n", cex=1.5)
+
+### CHOOSE A LEGEND AND TITLE ###
 title(substitute(paste(italic('P. falciparum'), " PCA vs. PPQ IC50" )), line = -0.5, cex.main=1.5)
-
-
-
-
-
-
-library(pegas)
-loci <- read.vcf("/run/user/1001/gvfs/sftp:host=kure.unc.edu,user=prchrist/proj/julianog/users/ChristianP/cambodiaWGS/pf/variants/our_goods_UG.pass.vcf", nloci=100)
-
+legend(-15, -5, legend = c("IC50 top 25%", "IC50 bottom 75%"), col = c("red", "black"), pch=19, bty="n", cex=1)
+### OR ###
+title(substitute(paste("Cambodian ", italic('P. falciparum'), " Isolates by Province" )), line = -0.5, cex.main=1.2)
+legend(-12, -5, legend = c("Battambang", "Oddar Meanchey", "Kampot"), col = c("red", "blue", "green"), pch=19, bty="n", cex=1.2)
