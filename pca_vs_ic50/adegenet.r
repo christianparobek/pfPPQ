@@ -47,12 +47,12 @@ ic50.marker <- function(ind_names, hi_ic50s) {
   return(ic)
 }
 
-## Function to record eigenplots
+## Function to plot eigenplot
 eig.plotter <- function(pca) {
   barplot(pca$eig, xlab = "", ylab = "Variance")
 }
 
-## Function to record PCAs
+## Function to plot PCA
 pca.plotter <- function(pca, pops, x, y) {
   plot(jitter(pca$scores[,y], factor=700) ~ jitter(pca$scores[,x], factor=700), 
      col=pops, 
@@ -71,18 +71,22 @@ pca.plotter <- function(pca, pops, x, y) {
 ##############################################################
 
 ### PREPARE DATA FOR ANALYSIS ###
-pf_cam_gl <- genlight.maker("/run/user/1001/gvfs/sftp:host=kure.unc.edu,user=prchrist/proj/julianog/users/ChristianP/cambodiaWGS/pf/variants/our_goods_UG.pass.vcf") # make genlight
+gl <- genlight.maker("/run/user/1001/gvfs/sftp:host=kure.unc.edu,user=prchrist/proj/julianog/users/ChristianP/cambodiaWGS/pf/variants/our_goods_UG.pass.vcf") # make genlight
 hi <- read.table("hi_ic50s.txt", header = FALSE)
-pf_cam_pops <- pop.definer(indNames(pf_cam_gl)) # define pops OR
-pf_cam_pops <- ic50.marker(indNames(pf_cam_gl), hi$V1) # mark the high IC50s
-pf_cam_pca <- glPca(pf_cam_gl) # calculate PCA
+pop(gl) <- pop.definer(indNames(gl)) # define pops OR
+pop(gl) <- as.factor(str_extract(indNames(gl), "[A-Z]+")) # define pops as factor OR
+pop(gl) <- ic50.marker(indNames(gl), hi$V1) # mark the high IC50s
+pca <- glPca(gl) # calculate PCA
+
+
+
 
 ### PLOT EIGENVALUES ###
-eig.plotter(pf_cam_pca)
+eig.plotter(pca)
 title(substitute(paste("Cambodia ", italic('P. falciparum'), " Eigenvalues" )), line = 0.5, cex.main = 1.5)
 
 ### PLOT PCA PICTURE ###
-pca.plotter(pf_cam_pca, pf_cam_pops + 1, 1, 2)
+pca.plotter(pca, pop(gl), 1, 2)
 
 ### CHOOSE A LEGEND AND TITLE ###
 title(substitute(paste(italic('P. falciparum'), " PCA vs. PPQ IC50" )), line = -0.5, cex.main=1.5)
@@ -90,3 +94,7 @@ legend(-15, -5, legend = c("IC50 top 25%", "IC50 bottom 75%"), col = c("red", "b
 ### OR ###
 title(substitute(paste("Cambodian ", italic('P. falciparum'), " Isolates by Province" )), line = -0.5, cex.main=1.2)
 legend(-12, -5, legend = c("Battambang", "Oddar Meanchey", "Kampot"), col = c("red", "blue", "green"), pch=19, bty="n", cex=1.2)
+### OR ###
+title(substitute(paste("PPQ and MQ Resistance vs. Genetic Background")), line = -0.5, cex.main=1.2)
+legend(-12, -5, legend = c("PPQ Resistant", "MQ Resistant", "PPQ + MQ Resistant"), col = c("red", "blue", "green"), pch=19, bty="n", cex=1.2)
+
