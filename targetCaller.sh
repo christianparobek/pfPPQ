@@ -46,6 +46,21 @@ done
 
 
 ##########################################################################
+############################ PfMDR1 MUTS #################################
+##########################################################################
+
+cat *.vcf |\
+	grep "Pf3D7_05_v3\|CHROM" |\
+	grep -v "##contig" |\
+	cut -d$'\t' -f1,2,4,5,10 |\
+	grep -v "958103\|958218\|958440\|959583\|960137\|960240\|960436\|960723\|961093\|961149\|961830"
+## Comparing my population vcf (UG, in my cambodiaWGS repo) to the
+## individual HC-called files
+## Catting in all the individual HC vcfs, then grepping out the variants
+## identified by UG. Left us with an indel in the Asp/Asn rich region.
+## Exported the shell output and cleaned up in Excel/gedit
+
+##########################################################################
 ########################## MIOTTO BACKBONE ###############################
 ##########################################################################
 
