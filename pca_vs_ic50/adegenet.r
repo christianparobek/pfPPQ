@@ -66,29 +66,72 @@ pca.plotter <- function(pca, pops, x, y) {
 }
 
 
-##############################################################
-############## Plasmodium falciparum Cambodia ################
-##############################################################
+#####################################################
+#################### INPUT DATA #####################
+#####################################################
 
-### PREPARE DATA FOR ANALYSIS ###
-gl <- genlight.maker("/run/user/1001/gvfs/sftp:host=kure.unc.edu,user=prchrist/proj/julianog/users/ChristianP/cambodiaWGS/pf/variants/our_goods_UG.pass.vcf") # make genlight
-hi <- read.table("hi_ic50s.txt", header = FALSE)
-pop(gl) <- pop.definer(indNames(gl)) # define pops OR
-pop(gl) <- as.factor(str_extract(indNames(gl), "[A-Z]+")) # define pops as factor OR
-pop(gl) <- ic50.marker(indNames(gl), hi$V1) # mark the high IC50s
-pca <- glPca(gl) # calculate PCA
+## Read in VCF
+gl <- genlight.maker("../variants/slimmed.recode.vcf") # make genlight
+indNames(gl) <- str_extract(indNames(gl), "[A-Z]+...") # fix the names
 
+## Read in metadata
+data <- read.table("PPQ_res_Aug20_v2.txt", sep="\t", header=TRUE)
 
 
+#####################################################
+################## CALCULATE PCA ####################
+#####################################################
 
-### PLOT EIGENVALUES ###
-eig.plotter(pca)
-title(substitute(paste("Cambodia ", italic('P. falciparum'), " Eigenvalues" )), line = 0.5, cex.main = 1.5)
+## Calculate PCA
+pca <- glPca(gl)
 
-### PLOT PCA PICTURE ###
-pca.plotter(pca, pop(gl), 1, 2)
 
-### CHOOSE A LEGEND AND TITLE ###
+#####################################################
+################# ASSIGN GROUPINGS ##################
+#####################################################
+
+## Define on location
+pop(gl) <- pop.definer(indNames(gl))
+
+## Define based on PPQ and MQ IC50s
+id <- as.character(data$WGS_ID[data$WGS_ID %in% indNames(gl)])
+ppq <- data$ppq_ic50[data$WGS_ID %in% indNames(gl)]
+mq <- data$mq_ic50[data$WGS_ID %in% indNames(gl)]
+ord <- match(indNames(gl), id) # got to match the order of JonP's metadata to the VCF
+pop(gl) <-
+  as.numeric(ppq[ord] > quantile(ppq[ord], na.rm=TRUE)[4]) + 
+  as.numeric(mq[ord] > quantile(mq[ord], na.rm=TRUE)[4])*2
+
+
+#####################################################
+##################### PLOT PCA ######################
+#####################################################
+
+scores <- pca$scores
+scores <- jitter(pca$scores, factor=700)
+
+plot(scores[,2] ~ scores[,1],
+     type = 'n',
+     axes = FALSE,
+     xlab=paste("PC", 1, " - ", round(pca$eig[1]/sum(pca$eig)*100), "% of the Variance", sep = ""),
+     ylab=paste("PC", 2, " - ", round(pca$eig[2]/sum(pca$eig)*100), "% of the Variance", sep = ""),
+     )
+points(scores[,2][is.na(pop(gl))] ~ scores[,1][is.na(pop(gl))]) # plot any with undetermined IC50
+points(scores[,2][pop(gl) == 0] ~ scores[,1][pop(gl) == 0]) # plot any with undetermined IC50
+points(scores[,2][pop(gl) == 1] ~ scores[,1][pop(gl) == 1], col = "red", pch=19) # plot high PPQ IC50
+points(scores[,2][pop(gl) == 2] ~ scores[,1][pop(gl) == 2], col = "blue", pch=19) # plot high MQ IC50
+points(scores[,2][pop(gl) == 3] ~ scores[,1][pop(gl) == 3], col = "green", pch=19) # plot high MQ IC50
+axis(1)
+axis(2)
+
+
+#####################################################
+############# CHOOSE TITLE AND LEGEND ###############
+#####################################################
+
+legend(-11, -4, legend = c("PPQ IC50 UQ", "MQ IC50 UQ", "PPQ & MQ IC50 UQ", "Missing Data or non-UQ"), col = c("red", "blue", "green", "black"), pch=c(19,19,19,1), cex=1)
+title(substitute(paste("PPQ and MQ Resistance vs. Genetic Background")), line = -0.5, cex.main=1.2)
+### OR ###
 title(substitute(paste(italic('P. falciparum'), " PCA vs. PPQ IC50" )), line = -0.5, cex.main=1.5)
 legend(-15, -5, legend = c("IC50 top 25%", "IC50 bottom 75%"), col = c("red", "black"), pch=19, bty="n", cex=1)
 ### OR ###
@@ -97,4 +140,58 @@ legend(-12, -5, legend = c("Battambang", "Oddar Meanchey", "Kampot"), col = c("r
 ### OR ###
 title(substitute(paste("PPQ and MQ Resistance vs. Genetic Background")), line = -0.5, cex.main=1.2)
 legend(-12, -5, legend = c("PPQ Resistant", "MQ Resistant", "PPQ + MQ Resistant"), col = c("red", "blue", "green"), pch=19, bty="n", cex=1.2)
+
+#####################################################
+################## COLOR GATING #####################
+#####################################################
+
+cp1 <- as.numeric((pca$scores[,1] > 20) & (pca$scores[,2] > -5))
+cp2 <- as.numeric((pca$scores[,1] > -5) & (pca$scores[,1] < 10) & 
+                    (pca$scores[,2] > -5) & (pca$scores[,2] < 10))*2
+cp3 <- as.numeric((pca$scores[,1] < -5) & (pca$scores[,2] < 0))*3
+cp4 <- as.numeric((pca$scores[,1] < -5) & (pca$scores[,2] > 0))*4
+
+
+#####################################################
+############# ggplot TO MAKE SPECTRUM ###############
+#####################################################
+
+ppq200 <- ppq
+ppq200[ppq200 > 200] <- 200
+
+library(ggplot2)
+library(gridExtra)
+
+df <- as.data.frame(jitter(pca$scores, factor=700))
+
+mqplot <- ggplot(df, aes(x=PC1, y=PC2)) + 
+  geom_point(aes(size = mq[ord], color = factor(cols)), alpha=0.6) + 
+  theme_bw() +
+  ggtitle("Mefloquine IC50") +
+  theme(
+    axis.text = element_text(size = 13),
+    axis.title = element_text(size = 13),
+    legend.position = "none") +
+  scale_size_continuous(range = c(2,9)) +
+  labs(
+    x = paste("PC", 1, " - ", round(pca$eig[1]/sum(pca$eig)*100), "% of the Variance", sep = ""),
+    y = paste("PC", 2, " - ", round(pca$eig[2]/sum(pca$eig)*100), "% of the Variance", sep = "")
+  )
+
+ppqplot <- ggplot(df, aes(x=PC1, y=PC2)) + 
+  geom_point(aes(size = ppq200[ord], color = factor(cols)), alpha=0.6) + 
+  theme_bw() +
+  ggtitle("Piperaquine IC50") +
+  theme(
+    axis.text = element_text(size = 13),
+    axis.title = element_text(size = 13),
+    legend.position = "none") +
+  scale_size_continuous(range = c(2,9)) +
+  labs(
+    x = paste("PC", 1, " - ", round(pca$eig[1]/sum(pca$eig)*100), "% of the Variance", sep = ""),
+    y = paste("PC", 2, " - ", round(pca$eig[2]/sum(pca$eig)*100), "% of the Variance", sep = "")
+  )
+
+
+grid.arrange(ppqplot, mqplot, ncol=2)
 
