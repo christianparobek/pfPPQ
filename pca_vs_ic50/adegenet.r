@@ -11,7 +11,7 @@
 ###################################################
 
 library(adegenet)
-#library(stringr)
+library(stringr)
 library(pegas)
 library(ggplot2)
 library(gridExtra)
@@ -24,7 +24,7 @@ library(gridExtra)
 genlight.maker <- function(infile) {
   loci <- read.vcf(infile)
   genlight <- new("genlight", loci) # convert data frame into genlight object
-  ploidy(genlight) <- 1 # add back population information
+  ploidy(genlight) <- as.integer(1) # add back population information
   return(genlight)
 }
 
