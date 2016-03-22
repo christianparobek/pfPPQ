@@ -1,0 +1,15 @@
+
+VCFtools - 0.1.14-SNAPSHOT
+(C) Adam Auton and Anthony Marcketta 2009
+
+Parameters as interpreted:
+	--vcf vcfs/our_goods_UG.pass.vcf
+	--keep cp_groups/cp1.txt
+	--out vcfs/our_goods_cp1
+	--recode
+
+Keeping individuals in 'keep' list
+After filtering, kept 17 out of 80 Individuals
+Outputting VCF file...
+After filtering, kept 7228 out of a possible 7228 Sites
+Run Time = 1.00 seconds
