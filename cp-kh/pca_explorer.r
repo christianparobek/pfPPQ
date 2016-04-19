@@ -16,6 +16,9 @@ library(pegas)
 library(abind)
 library(ggplot2)
 library(reshape)
+library(grid)
+library(gridExtra)
+library(strataG)
 
 
 #####################################################
@@ -67,7 +70,7 @@ pca.plotter <- function(pca, pops, x, y) {
 setwd("/run/user/1000/gvfs/sftp:host=kure.unc.edu,user=prchrist/proj/julianog/users/ChristianP/cambodiaWGS/cp-kh/")
 pf_gl <- genlight.maker("joint.vcf") # make genlight
 pf_pops <- pop.definer(indNames(pf_gl)) # define pops
-pf_pca <- glPca(pf_gl) # calculate PCA
+pf_pca <- glPca(pf_gl, nf = 8) # calculate PCA
 pf_pca_jit <- as.data.frame(jitter(pf_pca$scores, factor=100))
 # and make a copy with some jitter
 
@@ -135,7 +138,7 @@ palette <- c("brown1", "darkgoldenrod1", "darkolivegreen3", "deepskyblue", "grey
 #####
 plot.pca <- function(df, plotname, PCx, PCy) {
   pic <- ggplot(df, aes_string(x=colnames(df)[PCx], y=colnames(df)[PCy])) + 
-    geom_point(aes(size = 4, color = sansGambiaCol), alpha=0.9) +
+    geom_point(aes(size = 2, color = sansGambiaCol), alpha=0.9) +
     theme +
     scale_color_manual(values=palette) +
      labs(x = paste("PC", PCx, " - ", round(pf_pca$eig[PCx]/sum(pf_pca$eig)*100), "% variance", sep = ""),
@@ -148,21 +151,13 @@ pf_1_2 <- plot.pca(sansGambia, "", 1, 2)
 pf_1_3 <- plot.pca(sansGambia, "", 1, 3)
 pf_2_3 <- plot.pca(sansGambia, "", 2, 3)
 
-
-bars <- ggplot(as.data.frame(pca$eig), aes(x=1:length(pca$eig), y = pca$eig/sum(pca$eig)*100)) + 
-  geom_bar(stat = "identity") + 
-  theme + 
-  scale_y_continuous(limits=c(0, 30)) +
-  labs(x = "PC eigenvalues", y = "% variance") +
-  theme(plot.margin=unit(c(1.5,1.5,1.5,1.5), "lines"))
-
-
-
+## Prepare the data for the boxplot
+## Remember, you'll need to run the code in the boxplotter.r script
 com <- as.data.frame(t(boots[5:9,2,]))
 com1 <- com[c(5,1,2,3,4)]
-names(com1) <- c("KH1", "KH2", "KH3", "KH4", "KHA")
+names(com1) <- c("KHA", "KH1", "KH2", "KH3", "KH4")
 
-
+## Plot the boxplot
 box <- ggplot(data = melt(com1), aes(variable, value)) + 
   geom_boxplot(aes(fill = "brown1")) +
   theme +
@@ -170,14 +165,34 @@ box <- ggplot(data = melt(com1), aes(variable, value)) +
   theme(axis.title.y=element_text(vjust=1)) +
   theme(plot.margin=unit(c(1.5,1.5,1.5,1.2), "lines"))
 
+## Print the figure
 svg("Figure SX - CP_KH.svg", width = 11, height = 10.5)
-
-grid.arrange(pf_1_2, pf_1_3, pf_2_3, box, ncol=2)
-grid.text("A", x = unit(0.03, "npc"), y = unit(0.98, "npc"), gp=gpar(fontsize=30))
-grid.text("B", x = unit(0.54, "npc"), y = unit(0.98, "npc"), gp=gpar(fontsize=30))
-grid.text("C", x = unit(0.03, "npc"), y = unit(0.49, "npc"), gp=gpar(fontsize=30))
-grid.text("D", x = unit(0.54, "npc"), y = unit(0.49, "npc"), gp=gpar(fontsize=30))
-grid.text("*", x = unit(0.4251, "npc"), y = unit(0.41, "npc"), gp=gpar(fontsize=30))
-
+  grid.arrange(pf_1_2, pf_1_3, pf_2_3, box, ncol=2)
+  grid.text("A", x = unit(0.03, "npc"), y = unit(0.98, "npc"), gp=gpar(fontsize=30))
+  grid.text("B", x = unit(0.54, "npc"), y = unit(0.98, "npc"), gp=gpar(fontsize=30))
+  grid.text("C", x = unit(0.03, "npc"), y = unit(0.49, "npc"), gp=gpar(fontsize=30))
+  grid.text("D", x = unit(0.54, "npc"), y = unit(0.49, "npc"), gp=gpar(fontsize=30))
 dev.off()
+
+
+######################################################
+########## K-means CLUSTERING TO ID GROUPS ###########
+######################################################
+
+#####
+## Identify clusters using K-means
+#####
+
+## These settings appropriately group the CP3 and CP4 groups with themselves
+## And groups the nearby ERR samples in there too.
+grp <- find.clusters(pf_gl, n.pca = 4, max.n.clust = 10, choose.n.clust = FALSE, criterion = "diffNgroup")
+dapc <- dapc(pf_gl, grp$grp, n.pca = 4, n.da = 20)
+scatter(dapc)
+
+## Then cycle through the group memberships and figure out which correspond to CP3 and CP4
+
+pf_gl$ind.names[dapc$grp == 4] # CP4
+pf_gl$ind.names[dapc$grp == 6] # CP3
+
+## Now go do some calculations in popgenome_pi_calc.r
 

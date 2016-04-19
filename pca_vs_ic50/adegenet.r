@@ -106,7 +106,8 @@ pic <- ggplot(df, aes_string(x=colnames(df)[PCx], y=colnames(df)[PCy])) +
   theme +
   scale_color_manual(values=palette) +
   labs(x = paste("PC", PCx, " - ", round(pca$eig[PCx]/sum(pca$eig)*100), "% variance", sep = ""),
-       y = paste("PC", PCy, " - ", round(pca$eig[PCy]/sum(pca$eig)*100), "% variance", sep = "")) +
+       y = paste("PC", PCy, " - ", round(pca$eig[PCy]/sum(pca$eig)*100), "% variance", sep = ""),
+       title = expression(italic("P. falciparum"))) +
   theme(plot.margin=unit(c(1.5,1.5,1.5,1.5), "lines"))
 return(pic)
 }
@@ -140,6 +141,15 @@ grid.text("C", x = unit(0.04, "npc"), y = unit(0.48, "npc"), gp=gpar(fontsize=27
 grid.text("D", x = unit(0.54, "npc"), y = unit(0.48, "npc"), gp=gpar(fontsize=27))
 dev.off()
 
+
+#####################################################
+########## PLOTTING IN COLOR FOR DEFENSE ############
+#####################################################
+
+jpeg("color.jpeg", height = 6, width = 6, unit = "in", res = 300)
+palette <- c("deepskyblue", "brown1", "darkolivegreen3", "darkgoldenrod1")
+kplot.pca(df, "", dapc$grp, 1, 2)
+dev.off()
 
 
 #####################################################
@@ -254,3 +264,36 @@ grid.text("D", x = unit(0.53, "npc"), y = unit(0.46, "npc"), gp=gpar(fontsize=30
 grid.text("*", x = unit(0.4251, "npc"), y = unit(0.41, "npc"), gp=gpar(fontsize=30))
 
 dev.off()
+
+
+#####################################################
+########### LOOK FOR THE PC3 IMPT LOADINGS ##########
+#####################################################
+
+## Making the PC2 loadings figure
+svg("pc2_loadings.svg", width = 7, height = 5)
+plot(abs(pca$loadings[,2]), ylim = c(0,0.035), pch = "-", axes = FALSE, ylab = "PC2 Loadings", xlab = "")
+axis(1, at = c(0,7228))
+axis(2, las = 2, at = c(0.000, 0.005, 0.010, 0.015, 0.020, 0.025, 0.030), line = -0.6)
+segments(0, 0.025, 7228, 0.025, lty = 2)
+mtext("Variant Index", outer = FALSE, side = 1, line = 2)
+dev.off()
+
+sum(as.integer(pca$loadings[,2] > 0.025))
+nrow(pca$loadings)
+
+library(vcfR)
+vcf <- read.vcfR("../variants/slimmed.recode.84fix.vcf", verbose = FALSE )
+nrow(vcf@fix)
+
+# get the VCF coordinates that associate strongest with PC2
+pc2_snps <- vcf@fix[pca$loadings[,2] > 0.025,]
+
+write.table(pc2_snps, "pc2_snps.txt", row.names = FALSE, col.names = FALSE, quote = FALSE, sep = "\t")
+
+
+#dna <- ape::read.dna("../../../../refs/Pf3D7_v13.0/PlasmoDB-13.0_Pfalciparum3D7_Genome.fasta", format = "fasta")
+gff <- read.table("../variants/genes.gff", sep="\t", quote="")
+
+chrom <- create.chromR(name='Supercontig', vcf=vcf, ann=gff)
+## the dna should be just a single sequence
