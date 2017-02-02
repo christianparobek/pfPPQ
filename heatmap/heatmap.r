@@ -40,7 +40,7 @@ data$ppq_ic50[data$ppq_ic50 > 200] <- 200
 
 ## by ic50s
 ic50.subsetter <- function(data, group, order_by) {
-  data <- subset(data, select=c("WGS_ID", "ppq_ic50", "mq_ic50"))[data$pca_group == group,] # subset by group
+  data <- subset(data, select=c("WGS_ID", "ppq_ic90", "mq_ic50"))[data$pca_group == group,] # subset by group
   data[is.na(data)] <- -500
   data$WGS_ID <- with(data, eval(parse(text = paste("reorder(WGS_ID,", order_by, ")")))) # order
     # need the eval() expression to pass the "order_by" string as part of the reorder() expression
@@ -197,7 +197,7 @@ p_cp4_art <- ggplot(cp4_art, aesthetics) + geometry + theme + bw
 ########## PLOT IT ############
 ###############################
 
-svg("heatmap.svg", width=5, height=8)
+svg("heatmap_ic90.svg", width=5, height=8)
 
 grid.arrange(p_cp1_art, p_cp1_k13, p_cp1_mq, p_cp1_ppq, p_cp1, p_cp2_art, p_cp2_k13, p_cp2_mq, p_cp2_ppq, p_cp2, 
              p_cp3_art, p_cp3_k13, p_cp3_mq, p_cp3_ppq, p_cp3, p_cp4_art, p_cp4_k13, p_cp4_mq, p_cp4_ppq, p_cp4, 
@@ -209,7 +209,7 @@ grid.text("Background", x = 0.21, y = 0.985, gp=gpar(fontsize=10))
 grid.text("K13", x = 0.415, y = 0.985, gp=gpar(fontsize=10))
 grid.text("MQ", x = 0.505, y = 0.985, gp=gpar(fontsize=10))
 grid.text("PPQ", x = 0.69, y = 0.985, gp=gpar(fontsize=10))
-grid.text("IC50", x = 0.895, y = 0.985, gp=gpar(fontsize=10))
+grid.text("IC90/50", x = 0.895, y = 0.985, gp=gpar(fontsize=10))
 
 ## Add the sample IDs
 grid.text(rev(data[data$pca_group=="1",3]), x=0.97, y = ((0:16)/87)+0.770, gp=gpar(fontsize=6))
