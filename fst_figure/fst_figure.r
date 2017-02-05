@@ -66,6 +66,8 @@ pfPops <- set.populations(pf, list(as.character(cp1$V1), as.character(cp2$V1), a
 ## these are snps that are missense or nonsense in CP4
 ## but not in CP3
 appendix <- read.table("appendixS2", header = TRUE, sep = "\t")
+genedata <- read.table("genes_to_mark", header = TRUE, sep = "\t")
+
 
 ## To get gene names
 setwd("/run/user/1000/gvfs/sftp:host=kure.unc.edu,user=prchrist/proj/julianog/users/ChristianP/pfPPQ/fst_figure/")       
@@ -142,11 +144,27 @@ fst.plotter <- function(chr, name) {
   axis(2, at = c(0,1), line = -1, las = 2, col = "grey40", col.axis = "grey40")
   mtext(name, side = 2, outer = FALSE, line = 1.5, cex = 0.8, col = "grey40")
   mtext(expression(italic(F)["ST"]), side = 2, outer = FALSE, line = 0.5, cex = 0.5, col = "grey40")
+  
+  if (nrow(genedata[genedata$chr == chr,]) > 0){
+    
+    print("happy")
+    
+    segments(x0 = genedata[genedata$chr == chr,]$pos, y0 = 0, 
+             x1 = genedata[genedata$chr == chr,]$pos, y1 = 1, 
+             col = "brown1", lwd = 1)
+    
+    mtext(genedata[genedata$chr == chr,]$name, side = 1, 
+          at = genedata[genedata$chr == chr,]$pos, 
+          col = "brown1", font = 4, cex = 0.5, line = -0.25)
+    
+  }
+  
+
 }
 
 svg("fst_by_pc.svg", width = 7, height = 9)
 
-par(mfrow = c(14,1), mar = c(1,3,0,0))
+par(mfrow = c(14,1), mar = c(0.75,3,0,0))
 
 fst.plotter("chr01", "Chr 1")
 fst.plotter("chr02", "Chr 2")
