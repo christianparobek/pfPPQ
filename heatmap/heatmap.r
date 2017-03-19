@@ -180,7 +180,7 @@ svg("heatmap_ic90.svg", width=5, height=8)
 
 grid.arrange(p_cp1_art, p_cp1_k13, p_cp1_mq, p_cp1_ppq, p_cp1, cp1_lab, p_cp2_art, p_cp2_k13, p_cp2_mq, p_cp2_ppq, p_cp2, cp2_lab,
              p_cp3_art, p_cp3_k13, p_cp3_mq, p_cp3_ppq, p_cp3, cp3_lab, p_cp4_art, p_cp4_k13, p_cp4_mq, p_cp4_ppq, p_cp4, cp4_lab,
-             ncol = 6, widths = c(6/19,3/19,1/19,7/19,2/19,1.5/19), heights = c(17/78, 18/78, 20/78, 23/78),
+             ncol = 6, widths = c(6/19,3/19,1/19,7/19,2/19,1.45/19), heights = c(17/78, 18/78, 20/78, 23/78),
              top = "", left = "", bottom = "", padding = unit(1, "line"))
 
 ## Place column-group labels
