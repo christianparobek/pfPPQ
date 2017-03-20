@@ -82,8 +82,8 @@ clad <- prop.clades(tree, bstrees, rooted = TRUE)
 
 clad[clad < 90] <- NA
 
-svg("treeroot_5.svg", width = 4, height = 7)
-plot.phylo(tree, tip.color = colors, no.margin = TRUE, label.offset = 0.3, show.tip.label = FALSE)
+svg("treeroot_6.svg", width = 4, height = 7)
+plot.phylo(tree, tip.color = colors, no.margin = TRUE, label.offset = 1.2, show.tip.label = TRUE, cex = 0.5)
 #nodelabels(clad, bg = "white", adj = c(1.1, -0.5), font = 3, frame = "none", cex = 0.5)
 nodelabels(clad, bg = "white", adj = c(1.1, -0.5), font = 3, frame = "none", cex = 0.4, col = "brown1")
 tiplabels(pch=21, col="black", bg=colors, lwd=0.8, cex=1, adj = c(1.2, 0.5))
