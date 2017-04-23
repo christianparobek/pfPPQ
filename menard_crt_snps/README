@@ -1,0 +1,11 @@
+## In submission to GBE, a reviewer noted that Menard et al
+## identified SNPs in CRT, but that they found that satisfactory
+## coverage across CRT was difficult to achieve. We want to see 
+## if we have coverage at these sites in CRT.
+## To save space, I deleted the individual HC VCFs that I made
+## off which I called the miotto backbone. All those paths to GATK
+## have since changed and it would be difficult to get up and running
+## at this point, so going with an easier but likely just as reliable
+## solution: subset the bams and eyeball them in IGV.
+## RESULT: No SNPs at CRT 97, 343, or 353.
+## Search for "menard" in my pfPPQ GitHub page for more info.
