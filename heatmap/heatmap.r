@@ -19,12 +19,12 @@ library(gridExtra)
 ##### READ AND CLEAN DATA ####
 ##############################
 
-data <- read.table("PPQ_res_2017-01-30_modified_for_heatmap.txt", 
+data <- read.table("PPQ_res_2017-01-30_modified_for_heatmap_SRRs.txt", 
                    header=TRUE, sep = "\t", na.strings = ".")
 # read in data
 # make the periods NAs
 
-data <- data[!data$WGS_ID == 0,]
+data <- data[!data$SRS == 0,]
 # remove non-WGS samples
 
 data$ppq_ic90[data$ppq_ic90 > 3000] <- 3000 # knock down the really high values
@@ -39,9 +39,9 @@ data$mq_ic50 <- as.numeric(scale(data$mq_ic50))
 
 ## by ic50s
 ic50.subsetter <- function(data, group, order_by) {
-  data <- subset(data, select=c("WGS_ID", "ppq_ic90", "mq_ic50"))[data$pca_group == group,] # subset by group
+  data <- subset(data, select=c("SRS", "ppq_ic90", "mq_ic50"))[data$pca_group == group,] # subset by group
   data[is.na(data)] <- -500
-  data$WGS_ID <- with(data, eval(parse(text = paste("reorder(WGS_ID,", order_by, ")")))) # order
+  data$SRS <- with(data, eval(parse(text = paste("reorder(SRS,", order_by, ")")))) # order
   # need the eval() expression to pass the "order_by" string as part of the reorder() expression
   #data <- na.omit(data) # remove rows with missing ic50s
   data <- melt(data) # for ggplot
@@ -57,31 +57,30 @@ cp4 <- ic50.subsetter(data, 4, "ppq_ic90")
 subsetter <- function(data, group, order_by, selection) {
   data <- subset(data, select=selection)[data$pca_group == group,] # subset by group
   data[,c('ppq_ic90','mq_ic50')][is.na(data[,c('ppq_ic90','mq_ic50')])] <- -50 # replace mq and ppq ic50 NA values with an integer, -50
-  data$WGS_ID <- with(data, eval(parse(text = paste("reorder(WGS_ID,", order_by, ")")))) # order
+  data$SRS <- with(data, eval(parse(text = paste("reorder(SRS,", order_by, ")")))) # order
   data <- subset(data, select=-c(ppq_ic90, mq_ic50)) # remove the ppq and mq ic50 cols
   data <- data.frame(lapply(data, as.factor)) # convert all cols to factors
-  data <- melt(data, id.vars = "WGS_ID")
+  data <- melt(data, id.vars = "SRS")
   return(data)
 }
 
 ## subset ppq blocks
-ppq_cols <- c("WGS_ID", "exo_E415G", "Plas_2_3_dup", 
-              "MIIg_present_new", "X5r_cn_high", "CRT_350", 
-              "cviet_present", "MDR6_repeats_gt6", "ppq_ic90", "mq_ic50")
+ppq_cols <- c("SRS", "exo_E415G", "Plas_2_3_dup", 
+              "ppq_ic90", "mq_ic50")
 cp1_ppq <- subsetter(data, 1, "mq_ic50", ppq_cols)
 cp2_ppq <- subsetter(data, 2, "mq_ic50", ppq_cols)
 cp3_ppq <- subsetter(data, 3, "ppq_ic90", ppq_cols)
 cp4_ppq <- subsetter(data, 4, "ppq_ic90", ppq_cols)
 
 ## by mq genotypes
-mq_cols <- c("WGS_ID", "mdrcn_high", "ppq_ic90", "mq_ic50")
+mq_cols <- c("SRS", "mdrcn_high", "ppq_ic90", "mq_ic50")
 cp1_mq <- subsetter(data, 1, "mq_ic50", mq_cols)
 cp2_mq <- subsetter(data, 2, "mq_ic50", mq_cols)
 cp3_mq <- subsetter(data, 3, "ppq_ic90", mq_cols)
 cp4_mq <- subsetter(data, 4, "ppq_ic90", mq_cols)
 
 ## by art genotypes (Miotto's backbone)
-miotto_cols <- c("WGS_ID", "miotto_mdr2", "miotto_arps10", 
+miotto_cols <- c("SRS", "miotto_mdr2", "miotto_arps10", 
                  "miotto_crt326", "miotto_crt356", "miotto_fd", 
                  "miotto_pph", "ppq_ic90", "mq_ic50")
 cp1_art <- subsetter(data, 1, "mq_ic50", miotto_cols)
@@ -90,7 +89,7 @@ cp3_art <- subsetter(data, 3, "ppq_ic90", miotto_cols)
 cp4_art <- subsetter(data, 4, "ppq_ic90", miotto_cols)
 
 ## by K13 genotypes
-k13_cols <- c("WGS_ID", "k13_r539t_present", "k13_c580y_present", 
+k13_cols <- c("SRS", "k13_r539t_present", "k13_c580y_present", 
               "k13_other_present", "ppq_ic90", "mq_ic50")
 cp1_k13 <- subsetter(data, 1, "mq_ic50", k13_cols)
 cp2_k13 <- subsetter(data, 2, "mq_ic50", k13_cols)
@@ -122,7 +121,7 @@ top_row_theme <- theme(plot.margin=unit(c(0.75,0,-0.25,-0.5),"cm"), plot.title =
 geometry <- geom_tile(aes(fill = value), colour = "white", alpha = 0.8)
 
 ## DEFINE PLOT ##
-aesthetics <- aes(as.factor(variable), WGS_ID, group=WGS_ID)
+aesthetics <- aes(as.factor(variable), SRS, group=SRS)
 
 ## Setting colors for gradient and binary 
 min <- min(c(data$ppq_ic90, data$mq_ic50), na.rm = TRUE)
@@ -166,49 +165,49 @@ p_cp3_art <- ggplot(cp3_art, aesthetics) + geometry + theme + bw
 p_cp4_art <- ggplot(cp4_art, aesthetics) + geometry + theme + bw
 
 ## Plot Label plots
-cp1_lab <- ggplot(cp1[cp1$variable == "ppq_ic90",], aesthetics) + geom_text(aes(label=WGS_ID), size = 2) + theme
-cp2_lab <- ggplot(cp2[cp2$variable == "ppq_ic90",], aesthetics) + geom_text(aes(label=WGS_ID), size = 2) + theme
-cp3_lab <- ggplot(cp3[cp3$variable == "ppq_ic90",], aesthetics) + geom_text(aes(label=WGS_ID), size = 2) + theme
-cp4_lab <- ggplot(cp4[cp4$variable == "ppq_ic90",], aesthetics) + geom_text(aes(label=WGS_ID), size = 2) + theme
+cp1_lab <- ggplot(cp1[cp1$variable == "ppq_ic90",], aesthetics) + geom_text(aes(label=SRS), size = 2) + theme
+cp2_lab <- ggplot(cp2[cp2$variable == "ppq_ic90",], aesthetics) + geom_text(aes(label=SRS), size = 2) + theme
+cp3_lab <- ggplot(cp3[cp3$variable == "ppq_ic90",], aesthetics) + geom_text(aes(label=SRS), size = 2) + theme
+cp4_lab <- ggplot(cp4[cp4$variable == "ppq_ic90",], aesthetics) + geom_text(aes(label=SRS), size = 2) + theme
 
 
 ###############################
 ########## PLOT IT ############
 ###############################
 
-svg("heatmap_ic90.svg", width=5, height=8)
+svg("heatmap_ic90_new.svg", width=4, height=8)
 
 grid.arrange(p_cp1_art, p_cp1_k13, p_cp1_mq, p_cp1_ppq, p_cp1, cp1_lab, p_cp2_art, p_cp2_k13, p_cp2_mq, p_cp2_ppq, p_cp2, cp2_lab,
              p_cp3_art, p_cp3_k13, p_cp3_mq, p_cp3_ppq, p_cp3, cp3_lab, p_cp4_art, p_cp4_k13, p_cp4_mq, p_cp4_ppq, p_cp4, cp4_lab,
-             ncol = 6, widths = c(6/19,3/19,1/19,7/19,2/19,1.45/19), heights = c(17/78, 18/78, 20/78, 23/78),
+             ncol = 6, widths = c(5.75/14,3/14,1/14,2/14,2/14,2.5/14), heights = c(17/78, 18/78, 20/78, 23/78),
              top = "", left = "", bottom = "", padding = unit(1, "line"))
 
 ## Place column-group labels
-grid.text("Background", x = 0.21, y = 0.985, gp=gpar(fontsize=10))
-grid.text("K13", x = 0.415, y = 0.985, gp=gpar(fontsize=10))
-grid.text("MQ", x = 0.505, y = 0.985, gp=gpar(fontsize=10))
-grid.text("PPQ", x = 0.69, y = 0.985, gp=gpar(fontsize=10))
-grid.text("IC90/50", x = 0.895, y = 0.985, gp=gpar(fontsize=10))
+grid.text("Background", x = 0.25, y = 0.985, gp=gpar(fontsize=9))
+grid.text("K13", x = 0.50, y = 0.985, gp=gpar(fontsize=9))
+grid.text("MQ", x = 0.61, y = 0.985, gp=gpar(fontsize=9))
+grid.text("PPQ", x = 0.695, y = 0.985, gp=gpar(fontsize=9))
+grid.text("IC90/50", x = 0.81, y = 0.985, gp=gpar(fontsize=9))
 
 ## Place line segments over columns
-grid.segments(x0 = 0.08, y0 = 0.97, x1 = 0.335, y1 = 0.97)
-grid.segments(x0 = 0.3525, y0 = 0.97, x1 = 0.47, y1 = 0.97)
-grid.segments(x0 = 0.4875, y0 = 0.97, x1 = 0.52, y1 = 0.97)
-grid.segments(x0 = 0.535, y0 = 0.97, x1 = 0.8375, y1 = 0.97)
-grid.segments(x0 = 0.855, y0 = 0.97, x1 = 0.93, y1 = 0.97)
+grid.segments(x0 = 0.10, y0 = 0.97, x1 = 0.40, y1 = 0.97)
+grid.segments(x0 = 0.425, y0 = 0.97, x1 = 0.57, y1 = 0.97)
+grid.segments(x0 = 0.59, y0 = 0.97, x1 = 0.63, y1 = 0.97)
+grid.segments(x0 = 0.65, y0 = 0.97, x1 = 0.74, y1 = 0.97)
+grid.segments(x0 = 0.762, y0 = 0.97, x1 = 0.853, y1 = 0.97)
 
 ## Name the CP groups
-grid.text("CP1", rot = 90, x = 0.04, y = 0.86)
-grid.text("CP2", rot = 90, x = 0.04, y = 0.66)
-grid.text("CP3", rot = 90, x = 0.04, y = 0.43)
-grid.text("CP4", rot = 90, x = 0.04, y = 0.18)
+grid.text("CP1", rot = 90, x = 0.04, y = 0.86, gp=gpar(fontsize=9))
+grid.text("CP2", rot = 90, x = 0.04, y = 0.66, gp=gpar(fontsize=9))
+grid.text("CP3", rot = 90, x = 0.04, y = 0.43, gp=gpar(fontsize=9))
+grid.text("CP4", rot = 90, x = 0.04, y = 0.18, gp=gpar(fontsize=9))
 
 ## Add the gene names
-grid.text(c("mdr2", "arps10", "crt326", "crt356", "fd", "pph"), rot = 45, x = ((0:5)/23)+0.10, y = 0.04, gp=gpar(fontsize=6), just = "right")
-grid.text(c("R539T", "C580Y", "other"), rot = 45, x = ((0:2)/23)+0.375, y = 0.04, gp=gpar(fontsize=6), just = "right")
-grid.text(c("exo415", "plas2/3", "mrp2", "X5r", "crt350", "CVIET", "mdr6"), rot = 45, x = ((0:6)/23)+0.56, y = 0.04, gp=gpar(fontsize=6), just = "right")
-grid.text(c("mdr1"), rot = 45, x = 0.51, y = 0.04, gp=gpar(fontsize=6), just = "right")
-grid.text(c("PPQ", "MQ"), rot = 45, x = ((0:1)/23)+0.875, y = 0.04, gp=gpar(fontsize=6), just = "right")
+grid.text(c("mdr2", "arps10", "crt326", "crt356", "fd", "pph"), rot = 45, x = ((0:5)/20)+0.13, y = 0.04, gp=gpar(fontsize=6), just = "right")
+grid.text(c("R539T", "C580Y", "other"), rot = 45, x = ((0:2)/20)+0.45, y = 0.04, gp=gpar(fontsize=6), just = "right")
+grid.text(c("mdr1"), rot = 45, x = 0.615, y = 0.04, gp=gpar(fontsize=6), just = "right")
+grid.text(c("exo415", "plas2/3"), rot = 45, x = ((0:1)/20)+0.675, y = 0.04, gp=gpar(fontsize=6), just = "right")
+grid.text(c("PPQ", "MQ"), rot = 45, x = ((0:1)/20)+0.79, y = 0.04, gp=gpar(fontsize=6), just = "right")
 
 dev.off()
 
