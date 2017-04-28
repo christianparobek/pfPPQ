@@ -25,6 +25,8 @@ genlight.maker <- function(infile) {
 
 gl <- genlight.maker("slimmed.recode.84fix_with3D7.vcf")
   # read in VCF
+name_table <- read.table("../heatmap/PPQ_res_2017-01-30_modified_for_heatmap_SRRs.txt", sep = "\t", header = TRUE)
+  # read in table with both WGS and SRA names in it
 
 tree <- root(nj(dist(as.matrix(gl))), "Pf3D7", resolve.root = TRUE)
   # make tree
@@ -71,6 +73,21 @@ colors[colors %in% cp4] <- "darkgoldenrod1"
 colors[colors == "Pf3D7"] <- "black"
 
 
+## Crossmatch tip labels
+
+new_tip_labels <- vector()
+
+for (name in tree$tip.label){
+  #print(name)
+  new_name <- name_table[name_table$WGS_ID == name, 5]
+  #print(as.character(new_name))
+  new_tip_labels <- c(new_tip_labels, as.character(new_name))
+}
+
+new_tip_labels[79] <- "Pf3D7" # add in 3D7 at the end of the list
+
+tree$tip.label <- new_tip_labels
+
 ###########################################
 ################# MY TRY ##################
 ###########################################
@@ -82,7 +99,7 @@ clad <- prop.clades(tree, bstrees, rooted = TRUE)
 
 clad[clad < 90] <- NA
 
-svg("treeroot_6.svg", width = 4, height = 7)
+svg("treeroot_7.svg", width = 4, height = 7)
 plot.phylo(tree, tip.color = colors, no.margin = TRUE, label.offset = 1.2, show.tip.label = TRUE, cex = 0.5)
 #nodelabels(clad, bg = "white", adj = c(1.1, -0.5), font = 3, frame = "none", cex = 0.5)
 nodelabels(clad, bg = "white", adj = c(1.1, -0.5), font = 3, frame = "none", cex = 0.4, col = "brown1")
