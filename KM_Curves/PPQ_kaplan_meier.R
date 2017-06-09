@@ -38,7 +38,7 @@ ppqvar_colors <- c("#91bfdb", "#fc8d59")
 
 df <- read.table("PPQ_recrud.txt", header=TRUE, sep = "\t")
 df <- read.table("PPQ_recrud_jan27_2017_withPCT.txt", header=TRUE, sep = "\t")
-
+df <- read.table("PPQ_recrud_jun08_2017_withPCT.txt", header=TRUE, sep = "\t")
 
 #Unsuccessfully tried to create reciprocal of censor, to allow for cumulative incidence graph
 #df$invcensor[censor == 0] <- 1
