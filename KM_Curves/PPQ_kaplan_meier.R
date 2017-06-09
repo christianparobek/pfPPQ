@@ -236,7 +236,7 @@ km2_ppqvar <- km1_ppqvar +
 
 svg("kaplans.svg", width = 6, height = 6)
   grid.arrange(km2, km2_ppqvar, ncol = 1, heights = c(1, 1.2))
-  grid.text("Proportion of Recrudescence", hjust = 0.35, 
+  grid.text("Proportion without Recrudescence", hjust = 0.35, 
             x = unit(0.025, "npc"), gp=gpar(fontsize=15), rot = 90)
 dev.off()
 
