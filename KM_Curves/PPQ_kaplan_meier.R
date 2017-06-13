@@ -188,10 +188,8 @@ km2 <- km1 +
   theme_bw(18) +
   ggtitle(NULL) +
   theme(
-    axis.text.y = element_text(size = 12, color = "black"),
-    axis.title.y = element_text(size = 15),
-    axis.text.x = element_blank(),
-    axis.title.x = element_blank(),
+    axis.text = element_text(size = 12, color = "black"),
+    axis.title = element_text(size = 15),
     axis.ticks.x = element_blank(),
     legend.title = element_blank(),
     legend.justification=c(0,0), legend.position=c(0.05,0.05),
@@ -199,7 +197,7 @@ km2 <- km1 +
     ) +
   labs(
     x = "Days", 
-    y = "") +  
+    y = "Proportion without\nRecrudescence") +  
   scale_color_manual(labels=cp_names, values=palette) +
   scale_linetype_manual(labels=cp_names, values=custom_lines2) + 
   ylim(0, 1)
@@ -224,7 +222,7 @@ km2_ppqvar <- km1_ppqvar +
   ) +
   labs(
     x = "Days", 
-    y = "") +  
+    y = "Proportion without\nRecrudescence") +  
   scale_color_manual(labels=ppqvar_names, values=ppqvar_colors) +
   scale_linetype_manual(labels=ppqvar_names, values=custom_lines2) + 
   ylim(0, 1)
@@ -234,6 +232,7 @@ km2_ppqvar <- km1_ppqvar +
 ######## MAKE COMBINED PLOT #########
 #####################################
 
+## Gotta take the x axis out of the km2 plot and take the names out of the y axes
 svg("kaplans.svg", width = 6, height = 6)
   grid.arrange(km2, km2_ppqvar, ncol = 1, heights = c(1, 1.2))
   grid.text("Proportion without Recrudescence", hjust = 0.35, 
@@ -241,3 +240,14 @@ svg("kaplans.svg", width = 6, height = 6)
 dev.off()
 
 
+#####################################
+######## MAKE SEPARATE PLOTS #########
+#####################################
+
+svg("kaplan_cp.svg", width = 5.5, height = 3.5)
+km2
+dev.off()
+
+svg("kaplan_ppqvar.svg", width = 5.5, height = 3.5)
+km2_ppqvar
+dev.off()
